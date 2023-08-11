@@ -2,7 +2,6 @@ module Set10a where
 
 import Data.Char
 import Data.List
-
 import Mooc.Todo
 
 ------------------------------------------------------------------------------
@@ -16,7 +15,8 @@ import Mooc.Todo
 --   take 10 (doublify [0..])  ==>  [0,0,1,1,2,2,3,3,4,4]
 
 doublify :: [a] -> [a]
-doublify = todo
+doublify [] = []
+doublify (x : xs) = x : x : (doublify xs)
 
 ------------------------------------------------------------------------------
 -- Ex 2: Implement the function interleave that takes two lists and
@@ -37,7 +37,9 @@ doublify = todo
 --   take 10 (interleave [1..] (repeat 0)) ==> [1,0,2,0,3,0,4,0,5,0]
 
 interleave :: [a] -> [a] -> [a]
-interleave = todo
+interleave [] bs = bs
+interleave as [] = as
+interleave (a : as) (b : bs) = a : b : interleave as bs
 
 ------------------------------------------------------------------------------
 -- Ex 3: Deal out cards. Given a list of players (strings), and a list
@@ -55,8 +57,10 @@ interleave = todo
 --
 -- Hint: remember the functions cycle and zip?
 
-deal :: [String] -> [String] -> [(String,String)]
-deal = todo
+deal :: [String] -> [String] -> [(String, String)]
+deal [] _ = []
+deal _ [] = []
+deal players cards = zip cards (cycle players)
 
 ------------------------------------------------------------------------------
 -- Ex 4: Compute a running average. Go through a list of Doubles and
@@ -71,10 +75,12 @@ deal = todo
 --   averages [3,2,1] ==> [3.0,2.5,2.0]
 --   take 10 (averages [1..]) ==> [1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5]
 
-
-
 averages :: [Double] -> [Double]
-averages = todo
+averages ds = go ds []
+  where
+    go (d : ds) acc = avg (d : acc) : (go ds (d : acc))
+    go [] acc = []
+    avg xs = (sum xs) / fromIntegral (length xs)
 
 ------------------------------------------------------------------------------
 -- Ex 5: Given two lists, xs and ys, and an element z, generate an
@@ -92,7 +98,7 @@ averages = todo
 --   take 10 (alternate [1,2] [3,4,5] 0) ==> [1,2,0,3,4,5,0,1,2,0]
 
 alternate :: [a] -> [a] -> a -> [a]
-alternate xs ys z = todo
+alternate xs ys z = cycle (xs ++ [z] ++ ys ++ [z])
 
 ------------------------------------------------------------------------------
 -- Ex 6: Check if the length of a list is at least n. Make sure your
@@ -104,7 +110,7 @@ alternate xs ys z = todo
 --   lengthAtLeast 10 [0..]  ==> True
 
 lengthAtLeast :: Int -> [a] -> Bool
-lengthAtLeast = todo
+lengthAtLeast n xs = length (take n xs) == n
 
 ------------------------------------------------------------------------------
 -- Ex 7: The function chunks should take in a list, and a number n,
@@ -122,7 +128,10 @@ lengthAtLeast = todo
 --   take 4 (chunks 3 [0..]) ==> [[0,1,2],[1,2,3],[2,3,4],[3,4,5]]
 
 chunks :: Int -> [a] -> [[a]]
-chunks = todo
+chunks chunkSize [] = []
+chunks chunkSize values@(_ : vs)
+  | lengthAtLeast chunkSize values = (take chunkSize values) : (chunks chunkSize vs)
+  | otherwise = []
 
 ------------------------------------------------------------------------------
 -- Ex 8: Define a newtype called IgnoreCase, that wraps a value of
@@ -138,7 +147,13 @@ chunks = todo
 --   ignorecase "abC" == ignorecase "ABc"  ==>  True
 --   ignorecase "acC" == ignorecase "ABc"  ==>  False
 
-ignorecase = todo
+newtype IgnoreCase = IgnoreCase String
+
+ignorecase :: String -> IgnoreCase
+ignorecase str = IgnoreCase str
+
+instance Eq IgnoreCase where
+  (==) (IgnoreCase a) (IgnoreCase b) = (map toLower a) == (map toLower b)
 
 ------------------------------------------------------------------------------
 -- Ex 9: Here's the Room type and some helper functions from the
@@ -164,7 +179,7 @@ ignorecase = todo
 --   play maze ["Left","Left","Right"]
 --      ==> ["Maze","Deeper in the maze","Elsewhere in the maze","Deeper in the maze"]
 
-data Room = Room String [(String,Room)]
+data Room = Room String [(String, Room)]
 
 -- Do not modify describe, move or play. The tests will use the
 -- original definitions of describe, move and play regardless of your
@@ -178,8 +193,18 @@ move (Room _ directions) direction = lookup direction directions
 
 play :: Room -> [String] -> [String]
 play room [] = [describe room]
-play room (d:ds) = case move room d of Nothing -> [describe room]
-                                       Just r -> describe room : play r ds
+play room (d : ds) = case move room d of
+  Nothing -> [describe room]
+  Just r -> describe room : play r ds
 
 maze :: Room
-maze = todo
+maze = maze1
+
+maze1 :: Room
+maze1 = Room "Maze" [("Left", maze2), ("Right", maze3)]
+
+maze2 :: Room
+maze2 = Room "Deeper in the maze" [("Left", maze3), ("Right", maze1)]
+
+maze3 :: Room
+maze3 = Room "Elsewhere in the maze" [("Left", maze1), ("Right", maze2)]
